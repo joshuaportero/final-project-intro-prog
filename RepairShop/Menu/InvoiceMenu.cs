@@ -5,7 +5,7 @@ using Spectre.Console;
 
 namespace RepairShop.Menu
 {
-    public class InvoiceMenu
+    public static class InvoiceMenu
     {
         public static void Print(IEnumerable<string> services)
     {
@@ -24,23 +24,20 @@ namespace RepairShop.Menu
         invoiceTable.AddColumn(new TableColumn("Cost").Centered());
         invoiceTable.AddColumn(new TableColumn("Total").Centered());
 
-        var serviceCount = 0;
-        
         foreach (var service in enumerable)
         {
             var splitService = service.Split('-');
             invoiceTable.AddRow(new Markup(splitService[0]), new Markup($"[red]{splitService[1]}[/]"));
-            serviceCount++;
         }
 
         invoiceTable.AddRow(new Markup(""), new Markup(""), new Markup(""));
         invoiceTable.AddRow(new Markup(""), new Markup(""), new Markup(""));
-
-        // TODO: The service includes de work 
+        
         var taxGrossTotal = CalculatePercentage(servicesCost, 6.625);
-        var work = serviceCount * 59.99;
-        var taxWork = CalculatePercentage(work, 6.625);
-        var netTotal = servicesCost + taxWork + work + taxGrossTotal;
+        // var work = serviceCount * 59.99;
+        // var taxWork = CalculatePercentage(work, 6.625);
+        // var netTotal = servicesCost + taxWork + work + taxGrossTotal;
+        var netTotal = servicesCost + taxGrossTotal;
         
         // Gross total and tax
         invoiceTable.AddRow(new Markup(""), new Markup("GROSS Total")
@@ -50,15 +47,20 @@ namespace RepairShop.Menu
         invoiceTable.AddRow(new Markup(""), new Markup(""), new Markup(""));
         
         // Work total and tax
+        /*
+        
+                        WORK IS ALREADY INCLUDED IN PRICE
+        
         invoiceTable.AddRow(new Markup(""), new Markup("WORK Total")
             , new Markup($"[yellow]{DoubleToCurrency(work)}[/]"));
         invoiceTable.AddRow(new Markup(""), new Markup("TAX ([red]6.625[/]%)")
             , new Markup($"[yellow]{DoubleToCurrency(taxWork)}[/]"));
         invoiceTable.AddRow(new Markup(""), new Markup(""), new Markup(""));
+        */
         
         // Net Total
         invoiceTable.AddRow(new Markup(""), new Markup("NET Total"),
-            new Markup($"[lime]{DoubleToCurrency(netTotal)}[/]"));
+            new Markup($"[springgreen2_1]{DoubleToCurrency(netTotal)}[/]"));
 
         AnsiConsole.Write(invoiceTable.Centered());
 

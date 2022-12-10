@@ -1,14 +1,20 @@
 ﻿using System.Collections.Generic;
 using RepairShop.Menu;
 using RepairShop.Model;
+using RepairShop.Util;
 using Spectre.Console;
 
 namespace RepairShop
 {
+    /**
+     * Main Class: What this class represents the all of the choices in the menu. when running the code you are given a listr of multiple different options 
+     * "Add Vehicle", "Add Another Vehicle", "Remove Vehicle", "Remove Vehicles", "View Vehicle", "View Vehicles", "Create Appointment", "Create Another Appointment",
+     * "View Appointment", "View Appointments", "Cancel Appointment", "Cancel Appointments", "View Invoice", "Logout", "Exit". Collects data in it's memory.
+     */
     internal class RepairShop
     {
-        private const string Version = "v.0.7.4";
-        private const string Release = "ALPHA";
+        private const string Version = "v.1.0.1";
+        private const string Release = "";
 
         private static void Main()
         {
@@ -28,8 +34,8 @@ namespace RepairShop
             {
                 case "Add Customer":
                     // TODO: Remove comment when done with testing
-                    customer = CustomerMenu.Prompt();
-                    // customer = new Customer();
+                    // customer = CustomerMenu.Prompt();
+                    customer = new Customer();
                     goto main_menu;
                 case "Add Vehicle":
                     automobiles.Add(AutomobileMenu.Prompt());
@@ -45,7 +51,7 @@ namespace RepairShop
                         AutomobileMenu.DisplayList(new List<Automobile> { vehicle });
                         AnsiConsole.WriteLine("\n\n");
                         if (AnsiConsole.Confirm(
-                                "Are you sure you want to [red]delete[/] this [yellow]vehicle[/]? [grey](The appointment will also be canceled)[/]",
+                                "Are you sure you want to [red]delete[/] this [yellow]vehicle[/]? [grey](If there is an appointment linked to the vehicle, it will also be canceled)[/]",
                                 false))
                         {
                             automobiles.RemoveAt(index);
@@ -53,17 +59,31 @@ namespace RepairShop
                     }
 
                     goto main_menu;
-                case "Vehicle List":
+                case "View Vehicle":
+                    AutomobileMenu.DisplayList(automobiles);
+                    MessagesUtil.ContinuePrompt();
                     goto main_menu;
                 case "Create Appointment":
+                    appointments.Add(AppointmentMenu.Prompt(automobiles));
                     goto main_menu;
-                case "View Appointment's Date":
+                case "View Appointment":
+                    AppointmentMenu.DisplayDate(appointments[0].Date);
+                    MessagesUtil.ContinuePrompt();
                     goto main_menu;
                 case "Cancel Appointment":
+                    AppointmentMenu.DisplayDate(appointments[0].Date);
+                    AnsiConsole.WriteLine("\n\n");
+                    if (AnsiConsole.Confirm("Are you sure you want to [red]cancel[/] your [yellow]appointment[/]?", false))
+                    {
+                        appointments.Remove(appointments[0]);
+                    }
                     goto main_menu;
                 case "View Invoice":
+                    InvoiceMenu.Print(appointments[0].Services);
+                    MessagesUtil.ContinuePrompt();
                     goto main_menu;
                 case "Logout":
+                    CustomerMenu.Show(customer);
                     if (AnsiConsole.Confirm(
                             "Are you sure you want to [red]logout[/]? [grey53](Your details/vehicles/appointmets" +
                             " will be removed)[/]",
@@ -75,12 +95,15 @@ namespace RepairShop
                         appointments.Clear();
                         // Output a message
                         repairShop.Title();
-                        MainMenu.LogoutMessage();
-                        repairShop.ContinuePrompt();
+                        MainMenu.WarningMessage("You have been logged out!");
+                        MessagesUtil.ContinuePrompt();
                     }
 
                     goto main_menu;
                 case "Exit":
+                    MainMenu.WarningMessage(appointments.Count > 0 ? "Thank you! See you soon!" : "Have a good rest of your day!");
+                    MessagesUtil.ContinuePrompt();
+                    AnsiConsole.Clear();
                     return;
                 default:
                     goto main_menu;
@@ -94,21 +117,6 @@ namespace RepairShop
         {
             AnsiConsole.Clear();
             MainMenu.TitleFiglet(Version, Release);
-        }
-
-        /**
-         * <summary>Confirmation prompt -
-         * waiting for the user to press enter.</summary>
-         */
-        private void ContinuePrompt()
-        {
-            AnsiConsole.WriteLine("\n");
-            AnsiConsole.Write(new Markup("[grey37]Press [[[grey53]ENTER[/]]] to Continue![/]").Centered());
-            var textPrompt = new TextPrompt<string>("")
-            {
-                AllowEmpty = true
-            };
-            textPrompt.Show(AnsiConsole.Console);
         }
     }
 }

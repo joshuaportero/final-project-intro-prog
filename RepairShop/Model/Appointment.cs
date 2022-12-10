@@ -1,7 +1,10 @@
 ﻿using System;
 
 namespace RepairShop.Model
-{
+{   
+    /**
+     * Entity Class: Focused on the data of the appointment and the customer. (ex. Date of Appointment, Services, Vehicle,Transportation, and personal information of teh customer.)
+     */
     public class Appointment
     {
         public Automobile Automobile { get; set; }

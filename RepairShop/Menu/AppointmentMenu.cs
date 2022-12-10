@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using RepairShop.Model;
+using RepairShop.Util;
 using Spectre.Console;
+using Calendar = Spectre.Console.Calendar;
 
 namespace RepairShop.Menu
 {
@@ -12,7 +14,8 @@ namespace RepairShop.Menu
         {
             // Vehicles
             var spVehicles = new SelectionPrompt<string>()
-                .Title("In which vehicle would you like to perform the service?")
+                .HighlightStyle(Style.Parse("gold1"))
+                .Title("In which [yellow1]vehicle[/] would you like to perform the service?")
                 .PageSize(4)
                 .MoreChoicesText("[grey](Move up and down to reveal more vehicles)[/]");
             foreach (var v in automobiles)
@@ -27,7 +30,8 @@ namespace RepairShop.Menu
             // TODO: Add more services and parse services string to name and cost.
             var services = AnsiConsole.Prompt(
                 new MultiSelectionPrompt<string>()
-                    .Title($"What does your [gold1]{vehicle.Make}[/] need?")
+                    .HighlightStyle(Style.Parse("gold1"))
+                    .Title($"What does your [yellow1]{vehicle.Make}[/] need?")
                     .PageSize(10)
                     .MoreChoicesText("[grey](Move up and down to reveal more services)[/]")
                     .InstructionsText(
@@ -54,7 +58,8 @@ namespace RepairShop.Menu
             // TODO: Charge something if proprietary option
             // Transportation
             var transportation = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("While we are servicing your vehicle, Do you need a ride?")
+                .HighlightStyle(Style.Parse("gold1"))
+                .Title("While we are servicing your [yellow1]vehicle[/], Do you need a ride?")
                 .PageSize(4)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .AddChoices(
@@ -68,11 +73,11 @@ namespace RepairShop.Menu
 
             // Calendar
             var randomDateTime = RandomDateTime();
-            // DisplayDate(randomDateTime);
+            DisplayDate(randomDateTime);
             AnsiConsole.WriteLine("\n");
 
             // TODO: Generate and display another date if the user doesn't want to continue
-            AnsiConsole.Confirm("Continue?", false);
+            MessagesUtil.ContinuePrompt();
 
             return new AppointmentBuilder()
                 .WithVehicle(vehicle)
@@ -83,7 +88,6 @@ namespace RepairShop.Menu
         }
 
         /**
-        *                       TODO:
         * Generate a date and time with the following constraints
         * day > today
         * month >= today
@@ -93,7 +97,6 @@ namespace RepairShop.Menu
         */
         private static DateTime RandomDateTime()
         {
-
             var now = DateTime.Now;
 
             var r = new Random();
@@ -101,12 +104,20 @@ namespace RepairShop.Menu
             var newYear = r.Next(now.Year, now.Year + 1);
             var newMonth = newYear == now.Year ? r.Next(now.Month, 12) : r.Next(1, 12);
 
-            var newDay = newMonth == now.Month && newYear == now.Year ? r.Next(now.Day, DateTime.DaysInMonth(newYear , newMonth)) : r.Next(newYear, newMonth);
+            var newDay = newMonth == now.Month && newYear == now.Year
+                ? r.Next(now.Day, DateTime.DaysInMonth(newYear, newMonth))
+                : r.Next(1, DateTime.DaysInMonth(newYear, newMonth));
 
             var newHour = r.Next(8, 18);
-            var newMinute = r.Next(0, 59);
-            
-            return new DateTime(newYear,newMonth,newDay,newHour,newMinute,0);
+
+            // Only numbers divisible by 15
+            int newMinute;
+            do
+            {
+                newMinute = r.Next(0, 59);
+            } while (newMinute % 15 != 0);
+
+            return new DateTime(newYear, newMonth, newDay, newHour, newMinute, 0);
         }
 
 
@@ -118,8 +129,8 @@ namespace RepairShop.Menu
          * 
          * <param name="dateTime">Any date</param>
          * <returns>Formatted DateTime string</returns>
-         */ 
-        public static string DateToString(DateTime dateTime)
+         */
+        private static string DateToString(DateTime dateTime)
         {
             var day = dateTime.Day;
             string dayOrdinal;
@@ -140,7 +151,23 @@ namespace RepairShop.Menu
                     break;
             }
 
-            return $"{dateTime.Day}{dayOrdinal} of {dateTime.Month}({dateTime.DayOfWeek}) of {dateTime.Year} at {FormatDate(dateTime, "hh")}:{FormatDate(dateTime, "mm")}{FormatDate(dateTime, "tt")}";
+            return
+                $"[springgreen2_1]{dateTime.Day}[/]{dayOrdinal} of [springgreen2_1]{dateTime:MMMM}[/]({dateTime.DayOfWeek}) of [springgreen2_1]{dateTime.Year}[/] at [red]{FormatDate(dateTime, "hh")}[/]:[red]{FormatDate(dateTime, "mm")}[/]{FormatDate(dateTime, "tt")}";
+        }
+
+        public static void DisplayDate(DateTime dateTime)
+        {
+            var calendar = new Calendar(dateTime.Year, dateTime.Month);
+
+            calendar.HeaderStyle(Style.Parse("blue bold"));
+            calendar.AddCalendarEvent(dateTime);
+            calendar.HighlightStyle(Style.Parse("yellow bold"));
+            calendar.Centered();
+            AnsiConsole.Write(calendar);
+            AnsiConsole.Write(new Markup(
+                    $"\nYour appointment will be on {DateToString(dateTime)}")
+                .Centered());
+            AnsiConsole.WriteLine("\n");
         }
 
         private static string FormatDate(DateTime dateTime, string format)
